@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { areaSummary, exerciseSummary, inPastDays, localDay, millisecondsUntilNextLocalDay, shiftDay, summarize, type PracticeLog } from './domain';
+import { areaSummary, exerciseSummary, groupLogsByDay, inPastDays, localDay, millisecondsUntilNextLocalDay, shiftDay, summarize, type PracticeLog } from './domain';
 
 const log = (day: `${number}-${number}-${number}`, exerciseId: string, areaId: string): PracticeLog => ({ id: `${day}-${exerciseId}`, day, exerciseId, areaId, createdAt: `${day}T12:00:00Z` });
 
@@ -30,5 +30,10 @@ describe('practice summaries', () => {
     expect(exerciseSummary(logs, 'a', '2026-09-24').days30).toBe(2);
     expect(exerciseSummary(logs.filter((entry) => entry.id !== '2026-09-24-a'), 'a', '2026-09-24').lastPracticed).toBe('2026-09-18');
     expect(summarize([], '2026-09-24')).toEqual({ lastPracticed: undefined, days7: 0, days30: 0 });
+  });
+  it('groups history by local date in reverse chronological order', () => {
+    const grouped = groupLogsByDay([logs[2], logs[0], logs[3], logs[1]]);
+    expect(grouped.map(([day]) => day)).toEqual(['2026-09-24', '2026-09-18', '2026-08-25']);
+    expect(grouped[0][1]).toHaveLength(2);
   });
 });

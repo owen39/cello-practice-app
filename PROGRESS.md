@@ -7,7 +7,7 @@ This file tracks the current slice and completed work. Each completed slice shou
 | 0. Foundation | Complete | Senior developer agent | React/Vite PWA shell; IndexedDB repository and seed areas; domain and repository tests. `npm run build` and `npm test` pass (7 tests). |
 | 1. Library | Complete | Senior developer agent | Area/exercise create, edit, recategorize, archive; grouped search; recency and 7/30-day counts; direct log/undo from library. Build and 8 tests pass. |
 | 2. Today and logging | Complete | Senior developer agent | Daily selection, one-tap log/undo, removal independent of history, direct Library logs visible in Today. Local midnight/focus refresh. Build and 9 tests pass. |
-| 3. Overview and history | Queued | Unassigned | Start after logging. |
+| 3. Overview and history | Complete | Senior developer agent | Active area and exercise recency/counts; dated history with archived names and log correction. `npm run build` and `npm test` pass (13 tests). |
 | 4. Finish local release | Queued | Unassigned | Full workflow and phone/offline verification. |
 | 5. Optional cloud sync | Deferred | Unassigned | Needs Supabase configuration and conflict policy. |
 
@@ -19,3 +19,4 @@ This file tracks the current slice and completed work. Each completed slice shou
 - 2026-09-25: Repository methods guard active area/exercise references, keep archived catalog records, snapshot `areaId` in each log, and enforce one log per exercise and day. PWA includes 192px and 512px icons.
 - 2026-09-25: Library archive area action is available only after all active exercises have been moved or archived. Direct library logging uses the same repository log and undo methods intended for Today, so subsequent screens share one source of truth.
 - 2026-09-25: Today's selected list is keyed by local calendar day; old unfinished selections stay stored but are not shown on later days. The mounted app refreshes at local midnight and on focus/visibility, including the Library's logging date.
+- 2026-09-25: Overview computes area counts from each log's saved area snapshot and counts distinct local days. History includes archived catalog names and deleting a log immediately reloads its date group; navigating to Overview recalculates totals from storage.

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Library } from './Library';
 import { Today } from './Today';
+import { Overview } from './Overview';
+import { History } from './History';
 import { repository } from './storage';
 
 type Page = 'Today' | 'Library' | 'Overview' | 'History';
@@ -34,8 +36,7 @@ export function App() {
     <main id="main-content" className="content">
       <div className="intro"><p className="eyebrow">Practice companion</p><h1>{page}</h1><p>{descriptions[page]}</p></div>
       {error ? <p role="alert" className="notice error">{error}</p> : !ready ? <p role="status">Opening your practice library…</p> :
-        page === 'Library' ? <Library /> : page === 'Today' ? <Today /> :
-        <section className="card empty"><span aria-hidden="true">♫</span><h2>{page === 'Overview' ? 'A clearer picture is coming' : 'Your history begins here'}</h2><p>{page === 'Overview' ? 'Recent practice will appear here once logging is available.' : 'Practice you record will be listed by day here.'}</p></section>}
+        page === 'Library' ? <Library /> : page === 'Today' ? <Today /> : page === 'Overview' ? <Overview /> : <History />}
     </main>
     <nav className="bottom-nav" aria-label="Main navigation">{pages.map((item) => <button key={item} type="button" className={page === item ? 'active' : ''} aria-current={page === item ? 'page' : undefined} onClick={() => setPage(item)}>{item}</button>)}</nav>
   </div>;

@@ -50,6 +50,12 @@ export function millisecondsUntilNextLocalDay(now: Date): number {
   return Math.max(1, nextMidnight.getTime() - now.getTime());
 }
 
+export function daysSince(day: Day, today: Day): number {
+  const [year, month, date] = day.split('-').map(Number);
+  const [todayYear, todayMonth, todayDate] = today.split('-').map(Number);
+  return Math.round((Date.UTC(todayYear, todayMonth - 1, todayDate) - Date.UTC(year, month - 1, date)) / 86_400_000);
+}
+
 export function shiftDay(day: Day, offset: number): Day {
   const [year, month, date] = day.split('-').map(Number);
   // Midday avoids midnight transitions around daylight saving changes.
@@ -75,4 +81,10 @@ export function exerciseSummary(logs: PracticeLog[], exerciseId: string, today: 
 
 export function areaSummary(logs: PracticeLog[], areaId: string, today: Day): PracticeSummary {
   return summarize(logs.filter((log) => log.areaId === areaId), today);
+}
+
+export function groupLogsByDay(logs: PracticeLog[]): [Day, PracticeLog[]][] {
+  const groups = new Map<Day, PracticeLog[]>();
+  for (const log of logs) groups.set(log.day, [...(groups.get(log.day) ?? []), log]);
+  return [...groups.entries()].sort(([a], [b]) => b.localeCompare(a));
 }

@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
+import { areaSummary, exerciseSummary } from './domain';
 import { IndexedDbRepository } from './storage';
 
 function fresh() {
@@ -74,5 +75,20 @@ describe('local repository', () => {
     expect((await repo.listAreas()).some((area) => area.id === bowing.id)).toBe(false);
     expect((await repo.listAreas(true)).find((area) => area.id === bowing.id)?.archivedAt).toBeDefined();
     expect((await repo.listLogs()).find((log) => log.id === past.id)?.areaId).toBe(bowing.id);
+  });
+
+  it('retains archived exercise names and recomputes counts after a correction', async () => {
+    const repo = fresh();
+    await repo.initialize();
+    const area = (await repo.listAreas())[0];
+    const exercise = await repo.createExercise('C major scale', area.id);
+    const log = await repo.logPractice('2026-09-24', exercise.id);
+    await repo.archiveExercise(exercise.id);
+    expect(await repo.listExercises()).toEqual([]);
+    expect((await repo.listExercises(true))[0].name).toBe('C major scale');
+    expect(exerciseSummary(await repo.listLogs(), exercise.id, '2026-09-24').days7).toBe(1);
+    await repo.deleteLog(log.id);
+    expect(exerciseSummary(await repo.listLogs(), exercise.id, '2026-09-24').days7).toBe(0);
+    expect(areaSummary(await repo.listLogs(), area.id, '2026-09-24').lastPracticed).toBeUndefined();
   });
 });
