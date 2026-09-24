@@ -1,0 +1,59 @@
+import 'fake-indexeddb/auto';
+import { describe, expect, it } from 'vitest';
+import { IndexedDbRepository } from './storage';
+
+function fresh() {
+  return new IndexedDbRepository(`cello-test-${crypto.randomUUID()}`);
+}
+
+describe('local repository', () => {
+  it('seeds suggested areas once and preserves created exercises across repository instances', async () => {
+    const name = `cello-test-${crypto.randomUUID()}`;
+    const first = new IndexedDbRepository(name);
+    await first.initialize();
+    const areas = await first.listAreas();
+    expect(areas.map((area) => area.name)).toEqual(['Scales', 'Left hand', 'Bowing', 'Pieces', 'Other']);
+    const exercise = await first.createExercise('Open strings', areas[2].id);
+    const reopened = new IndexedDbRepository(name);
+    await reopened.initialize();
+    expect(await reopened.listAreas()).toHaveLength(5);
+    expect(await reopened.listExercises()).toEqual([exercise]);
+  });
+
+  it('makes logging idempotent and keeps the historical area when an exercise moves', async () => {
+    const repo = fresh();
+    await repo.initialize();
+    const [scales, , bowing] = await repo.listAreas();
+    const exercise = await repo.createExercise('Slow bows', bowing.id);
+    const first = await repo.logPractice('2026-09-24', exercise.id);
+    expect(await repo.logPractice('2026-09-24', exercise.id)).toEqual(first);
+    await repo.updateExercise(exercise.id, { name: exercise.name, areaId: scales.id });
+    const next = await repo.logPractice('2026-09-25', exercise.id);
+    expect([first.areaId, next.areaId]).toEqual([bowing.id, scales.id]);
+    expect(await repo.listLogs()).toHaveLength(2);
+    await repo.deleteLog(first.id);
+    expect(await repo.listLogs()).toEqual([next]);
+  });
+
+  it('keeps a log when selection is removed and guards area history', async () => {
+    const repo = fresh();
+    await repo.initialize();
+    const bowing = (await repo.listAreas())[2];
+    const exercise = await repo.createExercise('String crossings', bowing.id);
+    await repo.selectExercise('2026-09-24', exercise.id);
+    const selection = await repo.listSelections('2026-09-24');
+    await repo.selectExercise('2026-09-24', exercise.id);
+    expect(await repo.listSelections('2026-09-24')).toEqual(selection);
+    expect(await repo.listSelections('2026-09-25')).toEqual([]);
+    await repo.logPractice('2026-09-24', exercise.id);
+    await repo.removeSelection('2026-09-24', exercise.id);
+    expect(await repo.listSelections('2026-09-24')).toEqual([]);
+    expect(await repo.listLogs()).toHaveLength(1);
+    await expect(repo.archiveArea(bowing.id)).rejects.toThrow('Move or archive');
+    await repo.archiveExercise(exercise.id);
+    await repo.archiveArea(bowing.id);
+    expect(await repo.listExercises()).toEqual([]);
+    expect(await repo.listExercises(true)).toHaveLength(1);
+    expect(await repo.listAreas(true)).toHaveLength(5);
+  });
+});
