@@ -8,7 +8,7 @@ This file tracks the current slice and completed work. Each completed slice shou
 | 1. Library | Complete | Senior developer agent | Area/exercise create, edit, recategorize, archive; grouped search; recency and 7/30-day counts; direct log/undo from library. Build and 8 tests pass. |
 | 2. Today and logging | Complete | Senior developer agent | Daily selection, one-tap log/undo, removal independent of history, direct Library logs visible in Today. Local midnight/focus refresh. Build and 9 tests pass. |
 | 3. Overview and history | Complete | Senior developer agent | Active area and exercise recency/counts; dated history with archived names and log correction. `npm run build` and `npm test` pass (13 tests). |
-| 4. Finish local release | Complete, with offline reopen unverified | Senior developer agent | Local backup/restore, setup docs, accessibility and phone layout polish. Build and 15 tests pass; live phone-width core flow passed. Offline reopen remains unverified. |
+| 4. Finish local release | Complete | Senior developer agent + tech lead | Local backup/restore, setup docs, accessibility and phone layout polish. Build and 15 tests pass; live phone-width core flow and offline reopen passed. |
 | 5. Optional cloud sync | Deferred | Unassigned | Needs Supabase configuration and conflict policy. |
 
 ## Decisions
@@ -26,4 +26,4 @@ This file tracks the current slice and completed work. Each completed slice shou
 
 - 2026-09-25: `npm run build` generates the app, manifest, service worker, and precache; `npm test` passes 15 tests covering local dates, distinct area days, corrections, archived records, and backup round-trip/rejection.
 - 2026-09-25: A live phone-width browser walkthrough passed add exercise → select for Today → log → verify counts and history → delete correction. The skip link was confirmed hidden until keyboard focus, and navigation from the bottom of Library was confirmed to open Overview at the top.
-- Limitation: offline reopen after an initial loaded visit remains unverified. The generated service worker precaches the app shell; live offline behavior was not checked.
+- 2026-09-25: Opened the production build at `127.0.0.1:4173`, loaded it twice, stopped the preview server, then reloaded successfully. Added an exercise while the server was stopped and confirmed it remained after another reload. This verifies offline app-shell loading and local writes on this browser; it does not test a deployed phone installation.
