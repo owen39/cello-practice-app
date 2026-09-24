@@ -91,4 +91,32 @@ describe('local repository', () => {
     expect(exerciseSummary(await repo.listLogs(), exercise.id, '2026-09-24').days7).toBe(0);
     expect(areaSummary(await repo.listLogs(), area.id, '2026-09-24').lastPracticed).toBeUndefined();
   });
+
+  it('round-trips a local backup including archived records, selections, and logs', async () => {
+    const source = fresh();
+    await source.initialize();
+    const area = (await source.listAreas())[2];
+    const exercise = await source.createExercise('Slow bow', area.id);
+    await source.selectExercise('2026-09-24', exercise.id);
+    await source.logPractice('2026-09-24', exercise.id);
+    await source.archiveExercise(exercise.id);
+    const backup = await source.exportBackup();
+    const destination = fresh();
+    await destination.initialize();
+    await destination.importBackup(JSON.parse(JSON.stringify(backup)) as unknown);
+    const restored = await destination.exportBackup();
+    expect({ ...restored, exportedAt: backup.exportedAt }).toEqual(backup);
+    expect((await destination.listExercises(true))[0].name).toBe('Slow bow');
+  });
+
+  it('rejects an invalid backup before replacing current data', async () => {
+    const repo = fresh();
+    await repo.initialize();
+    const area = (await repo.listAreas())[0];
+    const exercise = await repo.createExercise('Open strings', area.id);
+    const backup = await repo.exportBackup();
+    backup.exercises[0].areaId = 'missing-area';
+    await expect(repo.importBackup(backup)).rejects.toThrow('missing exercise or area references');
+    expect((await repo.listExercises())[0].id).toBe(exercise.id);
+  });
 });

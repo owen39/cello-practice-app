@@ -8,7 +8,7 @@ This file tracks the current slice and completed work. Each completed slice shou
 | 1. Library | Complete | Senior developer agent | Area/exercise create, edit, recategorize, archive; grouped search; recency and 7/30-day counts; direct log/undo from library. Build and 8 tests pass. |
 | 2. Today and logging | Complete | Senior developer agent | Daily selection, one-tap log/undo, removal independent of history, direct Library logs visible in Today. Local midnight/focus refresh. Build and 9 tests pass. |
 | 3. Overview and history | Complete | Senior developer agent | Active area and exercise recency/counts; dated history with archived names and log correction. `npm run build` and `npm test` pass (13 tests). |
-| 4. Finish local release | Queued | Unassigned | Full workflow and phone/offline verification. |
+| 4. Finish local release | Complete, with offline reopen unverified | Senior developer agent | Local backup/restore, setup docs, accessibility and phone layout polish. Build and 15 tests pass; live phone-width core flow passed. Offline reopen remains unverified. |
 | 5. Optional cloud sync | Deferred | Unassigned | Needs Supabase configuration and conflict policy. |
 
 ## Decisions
@@ -20,3 +20,10 @@ This file tracks the current slice and completed work. Each completed slice shou
 - 2026-09-25: Library archive area action is available only after all active exercises have been moved or archived. Direct library logging uses the same repository log and undo methods intended for Today, so subsequent screens share one source of truth.
 - 2026-09-25: Today's selected list is keyed by local calendar day; old unfinished selections stay stored but are not shown on later days. The mounted app refreshes at local midnight and on focus/visibility, including the Library's logging date.
 - 2026-09-25: Overview computes area counts from each log's saved area snapshot and counts distinct local days. History includes archived catalog names and deleting a log immediately reloads its date group; navigating to Overview recalculates totals from storage.
+- 2026-09-25: Backup files include the complete local catalog, selections, and logs. Restore validates schema/version, uniqueness, dates, and references before an atomic replacement. Invalid backups leave existing data untouched.
+
+## Local release verification
+
+- 2026-09-25: `npm run build` generates the app, manifest, service worker, and precache; `npm test` passes 15 tests covering local dates, distinct area days, corrections, archived records, and backup round-trip/rejection.
+- 2026-09-25: A live phone-width browser walkthrough passed add exercise → select for Today → log → verify counts and history → delete correction. The skip link was confirmed hidden until keyboard focus, and navigation from the bottom of Library was confirmed to open Overview at the top.
+- Limitation: offline reopen after an initial loaded visit remains unverified. The generated service worker precaches the app shell; live offline behavior was not checked.

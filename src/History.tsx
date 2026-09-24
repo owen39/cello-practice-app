@@ -44,7 +44,7 @@ export function History() {
         <div className="section-heading"><h2 id={`history-${day}`}>{formatDay(day)}</h2><span className="count-badge">{entries.length} {entries.length === 1 ? 'exercise' : 'exercises'}</span></div>
         <ul>{entries.map((log) => {
           const exercise = exerciseById.get(log.exerciseId);
-          return <li key={log.id}><div><strong>{exercise?.name ?? 'Exercise no longer available'}</strong><small>{areaById.get(log.areaId)?.name ?? 'Area no longer available'}{exercise?.archivedAt ? ' · Archived exercise' : ''}</small></div><button className="small text-button" disabled={busyId !== undefined} onClick={() => void correct(log)}>Delete entry</button></li>;
+          return <li key={log.id}><div><strong>{exercise?.name ?? 'Exercise no longer available'}</strong><small>{areaById.get(log.areaId)?.name ?? 'Area no longer available'}{exercise?.archivedAt ? ' · Archived exercise' : ''}</small></div><button className="small text-button" aria-label={`Delete ${exercise?.name ?? 'exercise'} practice entry for ${formatDay(day)}`} disabled={busyId !== undefined} onClick={() => void correct(log)}>Delete entry</button></li>;
         })}</ul>
       </section>)}
   </div>;

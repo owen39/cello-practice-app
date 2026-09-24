@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { parseBackup } from './backup';
 import { exerciseSummary, type Area, type Exercise, type PracticeLog } from './domain';
 import { repository } from './storage';
 import { useLocalDay } from './useLocalDay';
@@ -17,6 +18,7 @@ export function Library() {
   const [editName, setEditName] = useState('');
   const [editAreaId, setEditAreaId] = useState('');
   const [error, setError] = useState<string>();
+  const [notice, setNotice] = useState<string>();
   const [busy, setBusy] = useState(false);
   const today = useLocalDay();
 
@@ -37,6 +39,7 @@ export function Library() {
 
   async function perform(action: () => Promise<unknown>, after?: () => void) {
     setError(undefined);
+    setNotice(undefined);
     setBusy(true);
     try { await action(); await refresh(); after?.(); }
     catch (cause) { setError(message(cause)); }
@@ -60,8 +63,34 @@ export function Library() {
   function beginAreaEdit(area: Area) { setEditingExercise(null); setEditingArea(area.id); setEditName(area.name); }
   function beginExerciseEdit(exercise: Exercise) { setEditingArea(null); setEditingExercise(exercise.id); setEditName(exercise.name); setEditAreaId(exercise.areaId); }
 
+  async function downloadBackup() {
+    await perform(async () => {
+      const backup = await repository.exportBackup();
+      const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `cello-practice-${today}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    }, () => setNotice('Backup downloaded. Keep the file somewhere safe.'));
+  }
+
+  async function restoreBackup(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      const backup = parseBackup(JSON.parse(await file.text()) as unknown);
+      if (!window.confirm('Restore this backup? It will replace all practice data currently saved on this device.')) return;
+      await perform(() => repository.importBackup(backup), () => setNotice('Backup restored. Your practice data is ready.'));
+    } catch (cause) { setError(message(cause)); }
+  }
+
   return <div className="library">
     {error && <p role="alert" className="notice error">{error}</p>}
+    {notice && <p role="status" className="notice success">{notice}</p>}
     <section className="card library-create" aria-labelledby="add-exercise-heading">
       <h2 id="add-exercise-heading">Add an exercise</h2>
       <form className="form-row" onSubmit={submitExercise}>
@@ -82,7 +111,7 @@ export function Library() {
           {editingArea === area.id ? <form className="inline-form" onSubmit={(event) => { event.preventDefault(); void perform(() => repository.renameArea(area.id, editName), () => setEditingArea(null)); }}>
             <label><span className="sr-only">Rename {area.name}</span><input autoFocus value={editName} onChange={(event) => setEditName(event.target.value)} maxLength={80} required /></label>
             <button className="small primary" disabled={busy}>Save</button><button className="small text-button" type="button" onClick={() => setEditingArea(null)}>Cancel</button>
-          </form> : <><span><strong>{area.name}</strong><small>{activeCount} active {activeCount === 1 ? 'exercise' : 'exercises'}</small></span><div className="actions"><button className="small text-button" onClick={() => beginAreaEdit(area)} disabled={busy}>Rename</button><button className="small text-button" disabled={busy || activeCount > 0} title={activeCount > 0 ? 'Move or archive its active exercises first' : undefined} onClick={() => void perform(() => repository.archiveArea(area.id))}>Archive</button></div></>}
+          </form> : <><span><strong>{area.name}</strong><small>{activeCount} active {activeCount === 1 ? 'exercise' : 'exercises'}</small></span><div className="actions"><button className="small text-button" aria-label={`Rename ${area.name} area`} onClick={() => beginAreaEdit(area)} disabled={busy}>Rename</button><button className="small text-button" aria-label={`Archive ${area.name} area`} disabled={busy || activeCount > 0} title={activeCount > 0 ? 'Move or archive its active exercises first' : undefined} onClick={() => void perform(() => repository.archiveArea(area.id))}>Archive</button></div></>}
           {activeCount > 0 && <p className="helper">Move or archive its exercises before archiving this area.</p>}
         </li>;
       })}</ul>
@@ -100,10 +129,16 @@ export function Library() {
               <label>Exercise name<input autoFocus value={editName} onChange={(event) => setEditName(event.target.value)} maxLength={120} required /></label>
               <label>Practice area<select value={editAreaId} onChange={(event) => setEditAreaId(event.target.value)}>{catalog.areas.map((option) => <option value={option.id} key={option.id}>{option.name}</option>)}</select></label>
               <div className="actions"><button className="small primary" disabled={busy}>Save changes</button><button className="small text-button" type="button" onClick={() => setEditingExercise(null)}>Cancel</button></div>
-            </form> : <><div className="exercise-main"><div><h4>{exercise.name}</h4><p className="exercise-meta">{summary.lastPracticed ? `Last practiced ${summary.lastPracticed}` : 'Not practiced yet'} · {summary.days7} days in the past 7 · {summary.days30} days in the past 30</p></div><div className="actions"><button className="small text-button" onClick={() => beginExerciseEdit(exercise)} disabled={busy}>Edit</button><button className="small text-button" onClick={() => void perform(() => repository.archiveExercise(exercise.id))} disabled={busy}>Archive</button></div></div><div className="practice-action">{todayLog ? <button className="secondary" onClick={() => void perform(() => repository.deleteLog(todayLog.id))} disabled={busy}>Practiced today · Undo</button> : <button className="primary" onClick={() => void perform(() => repository.logPractice(today, exercise.id))} disabled={busy}>Mark practiced today</button>}</div></>}
+            </form> : <><div className="exercise-main"><div><h4>{exercise.name}</h4><p className="exercise-meta">{summary.lastPracticed ? `Last practiced ${summary.lastPracticed}` : 'Not practiced yet'} · {summary.days7} days in the past 7 · {summary.days30} days in the past 30</p></div><div className="actions"><button className="small text-button" aria-label={`Edit ${exercise.name}`} onClick={() => beginExerciseEdit(exercise)} disabled={busy}>Edit</button><button className="small text-button" aria-label={`Archive ${exercise.name}`} onClick={() => void perform(() => repository.archiveExercise(exercise.id))} disabled={busy}>Archive</button></div></div><div className="practice-action">{todayLog ? <button className="secondary" aria-label={`Undo today's practice for ${exercise.name}`} onClick={() => void perform(() => repository.deleteLog(todayLog.id))} disabled={busy}>Practiced today · Undo</button> : <button className="primary" aria-label={`Mark ${exercise.name} practiced today`} onClick={() => void perform(() => repository.logPractice(today, exercise.id))} disabled={busy}>Mark practiced today</button>}</div></>}
           </li>;
         })}</ul></section>;
       })}
+    </section>
+    <section className="card backup-panel" aria-labelledby="backup-heading">
+      <h2 id="backup-heading">Keep a copy of your practice</h2>
+      <p>Your records are saved on this device. Download a backup occasionally, especially before changing or clearing your browser.</p>
+      <div className="backup-actions"><button className="secondary" type="button" disabled={busy} onClick={() => void downloadBackup()}>Download backup</button><label>Restore a backup<input type="file" accept=".json,application/json" disabled={busy} onChange={(event) => void restoreBackup(event)} /></label></div>
+      <p className="helper">Restoring replaces all practice data on this device. Your backup file stays on your device.</p>
     </section>
   </div>;
 }

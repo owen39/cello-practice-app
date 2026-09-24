@@ -62,7 +62,7 @@ export function Today() {
           const log = todayLogs.find((item) => item.exerciseId === exerciseId);
           return <li key={exerciseId} className="today-item">
             <div><strong>{displayName(exerciseId)}</strong><small>{displayArea(exerciseId)}</small><span className="done-status">{log ? 'Practiced today' : 'Ready when you are'}</span></div>
-            <div className="actions">{log ? <button className="secondary" disabled={busy} onClick={() => void perform(() => repository.deleteLog(log.id))}>Undo practice</button> : <button className="primary" disabled={busy || !!exercise?.archivedAt} onClick={() => void perform(() => repository.logPractice(day, exerciseId))}>Mark practiced</button>}<button className="small text-button" disabled={busy} onClick={() => void perform(() => repository.removeSelection(day, exerciseId))}>Remove from list</button></div>
+            <div className="actions">{log ? <button className="secondary" aria-label={`Undo today's practice for ${displayName(exerciseId)}`} disabled={busy} onClick={() => void perform(() => repository.deleteLog(log.id))}>Undo practice</button> : <button className="primary" aria-label={`Mark ${displayName(exerciseId)} practiced today`} disabled={busy || !!exercise?.archivedAt} onClick={() => void perform(() => repository.logPractice(day, exerciseId))}>Mark practiced</button>}<button className="small text-button" aria-label={`Remove ${displayName(exerciseId)} from today's list`} disabled={busy} onClick={() => void perform(() => repository.removeSelection(day, exerciseId))}>Remove from list</button></div>
           </li>;
         })}</ul>}
       <form className="form-row add-today" onSubmit={(event) => { event.preventDefault(); if (chosenId) void perform(() => repository.selectExercise(day, chosenId)); }}>
@@ -71,7 +71,7 @@ export function Today() {
       </form>
       {available.length === 0 && snapshot.exercises.filter((exercise) => !exercise.archivedAt).length === 0 && <p className="helper">Add an exercise in the Library to get started.</p>}
     </section>
-    {extraLogs.length > 0 && <section className="card" aria-labelledby="extra-heading"><h2 id="extra-heading">Also practiced today</h2><p>These were marked in the Library without adding them to today’s list.</p><ul className="today-list">{extraLogs.map((log) => <li className="today-item" key={log.id}><div><strong>{displayName(log.exerciseId)}</strong><small>{areaById.get(log.areaId)?.name ?? 'Archived area'}</small></div><button className="small text-button" disabled={busy} onClick={() => void perform(() => repository.deleteLog(log.id))}>Undo practice</button></li>)}</ul></section>}
+    {extraLogs.length > 0 && <section className="card" aria-labelledby="extra-heading"><h2 id="extra-heading">Also practiced today</h2><p>These were marked in the Library without adding them to today’s list.</p><ul className="today-list">{extraLogs.map((log) => <li className="today-item" key={log.id}><div><strong>{displayName(log.exerciseId)}</strong><small>{areaById.get(log.areaId)?.name ?? 'Archived area'}</small></div><button className="small text-button" aria-label={`Undo today's practice for ${displayName(log.exerciseId)}`} disabled={busy} onClick={() => void perform(() => repository.deleteLog(log.id))}>Undo practice</button></li>)}</ul></section>}
   </div>;
 }
 

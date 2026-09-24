@@ -1,6 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 import type { Area, Day, Exercise, PracticeLog, TodaySelection } from './domain';
 import type { PracticeRepository } from './repository';
+import { parseBackup, type PracticeBackup } from './backup';
 
 const starterAreas = ['Scales', 'Left hand', 'Bowing', 'Pieces', 'Other'];
 
@@ -131,6 +132,29 @@ export class IndexedDbRepository implements PracticeRepository {
 
   async deleteLog(id: string): Promise<void> {
     await this.db.logs.delete(id);
+  }
+
+  async exportBackup(): Promise<PracticeBackup> {
+    return this.db.transaction('r', this.db.areas, this.db.exercises, this.db.selections, this.db.logs, async () => ({
+      format: 'cello-practice-backup' as const,
+      version: 1 as const,
+      exportedAt: new Date().toISOString(),
+      areas: await this.db.areas.toArray(),
+      exercises: await this.db.exercises.toArray(),
+      selections: await this.db.selections.toArray(),
+      logs: await this.db.logs.toArray()
+    }));
+  }
+
+  async importBackup(value: unknown): Promise<void> {
+    const backup = parseBackup(value);
+    await this.db.transaction('rw', this.db.areas, this.db.exercises, this.db.selections, this.db.logs, async () => {
+      await Promise.all([this.db.areas.clear(), this.db.exercises.clear(), this.db.selections.clear(), this.db.logs.clear()]);
+      await this.db.areas.bulkAdd(backup.areas);
+      await this.db.exercises.bulkAdd(backup.exercises);
+      await this.db.selections.bulkAdd(backup.selections);
+      await this.db.logs.bulkAdd(backup.logs);
+    });
   }
 }
 

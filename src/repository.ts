@@ -1,4 +1,5 @@
 import type { Area, Day, Exercise, PracticeLog, TodaySelection } from './domain';
+import type { PracticeBackup } from './backup';
 
 export interface PracticeRepository {
   initialize(): Promise<void>;
@@ -16,4 +17,6 @@ export interface PracticeRepository {
   listLogs(): Promise<PracticeLog[]>;
   logPractice(day: Day, exerciseId: string): Promise<PracticeLog>;
   deleteLog(id: string): Promise<void>;
+  exportBackup(): Promise<PracticeBackup>;
+  importBackup(value: unknown): Promise<void>;
 }
