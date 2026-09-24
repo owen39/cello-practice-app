@@ -26,6 +26,7 @@ describe('local repository', () => {
     const [scales, , bowing] = await repo.listAreas();
     const exercise = await repo.createExercise('Slow bows', bowing.id);
     const first = await repo.logPractice('2026-09-24', exercise.id);
+    expect(await repo.listSelections('2026-09-24')).toEqual([]);
     expect(await repo.logPractice('2026-09-24', exercise.id)).toEqual(first);
     await repo.updateExercise(exercise.id, { name: exercise.name, areaId: scales.id });
     const next = await repo.logPractice('2026-09-25', exercise.id);
@@ -47,6 +48,11 @@ describe('local repository', () => {
     expect(await repo.listSelections('2026-09-25')).toEqual([]);
     await repo.logPractice('2026-09-24', exercise.id);
     await repo.removeSelection('2026-09-24', exercise.id);
+    expect(await repo.listSelections('2026-09-24')).toEqual([]);
+    expect(await repo.listLogs()).toHaveLength(1);
+    expect((await repo.listLogs())[0].day).toBe('2026-09-24');
+    await repo.selectExercise('2026-09-25', exercise.id);
+    expect(await repo.listSelections('2026-09-25')).toHaveLength(1);
     expect(await repo.listSelections('2026-09-24')).toEqual([]);
     expect(await repo.listLogs()).toHaveLength(1);
     await expect(repo.archiveArea(bowing.id)).rejects.toThrow('Move or archive');

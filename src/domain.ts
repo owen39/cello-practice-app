@@ -45,6 +45,11 @@ export function localDay(date: Date): Day {
   return `${year}-${month}-${day}` as Day;
 }
 
+export function millisecondsUntilNextLocalDay(now: Date): number {
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return Math.max(1, nextMidnight.getTime() - now.getTime());
+}
+
 export function shiftDay(day: Day, offset: number): Day {
   const [year, month, date] = day.split('-').map(Number);
   // Midday avoids midnight transitions around daylight saving changes.

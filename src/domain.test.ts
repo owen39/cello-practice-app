@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { areaSummary, exerciseSummary, inPastDays, localDay, shiftDay, summarize, type PracticeLog } from './domain';
+import { areaSummary, exerciseSummary, inPastDays, localDay, millisecondsUntilNextLocalDay, shiftDay, summarize, type PracticeLog } from './domain';
 
 const log = (day: `${number}-${number}-${number}`, exerciseId: string, areaId: string): PracticeLog => ({ id: `${day}-${exerciseId}`, day, exerciseId, areaId, createdAt: `${day}T12:00:00Z` });
 
@@ -13,6 +13,10 @@ describe('local calendar days', () => {
     expect(inPastDays('2025-12-26', '2026-01-01', 7)).toBe(true);
     expect(inPastDays('2025-12-25', '2026-01-01', 7)).toBe(false);
     expect(inPastDays('2026-01-02', '2026-01-01', 7)).toBe(false);
+  });
+  it('schedules refresh at the next local midnight', () => {
+    expect(millisecondsUntilNextLocalDay(new Date(2026, 8, 24, 23, 59, 59, 500))).toBe(500);
+    expect(localDay(new Date(2026, 8, 25, 0, 0, 0))).toBe('2026-09-25');
   });
 });
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { exerciseSummary, localDay, type Area, type Exercise, type PracticeLog } from './domain';
+import { exerciseSummary, type Area, type Exercise, type PracticeLog } from './domain';
 import { repository } from './storage';
+import { useLocalDay } from './useLocalDay';
 
 interface Catalog { areas: Area[]; exercises: Exercise[]; logs: PracticeLog[] }
 const emptyCatalog: Catalog = { areas: [], exercises: [], logs: [] };
@@ -17,7 +18,7 @@ export function Library() {
   const [editAreaId, setEditAreaId] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const [today, setToday] = useState(localDay(new Date()));
+  const today = useLocalDay();
 
   const refresh = useCallback(async () => {
     const [areas, exercises, logs] = await Promise.all([
@@ -25,7 +26,6 @@ export function Library() {
     ]);
     setCatalog({ areas, exercises, logs });
     setExerciseAreaId((current) => areas.some((area) => area.id === current) ? current : (areas[0]?.id ?? ''));
-    setToday(localDay(new Date()));
   }, []);
 
   useEffect(() => {
