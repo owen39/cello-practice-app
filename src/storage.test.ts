@@ -56,4 +56,17 @@ describe('local repository', () => {
     expect(await repo.listExercises(true)).toHaveLength(1);
     expect(await repo.listAreas(true)).toHaveLength(5);
   });
+
+  it('allows archiving an emptied area after recategorization without changing a past log', async () => {
+    const repo = fresh();
+    await repo.initialize();
+    const [scales, , bowing] = await repo.listAreas();
+    const exercise = await repo.createExercise('Bow circles', bowing.id);
+    const past = await repo.logPractice('2026-09-23', exercise.id);
+    await repo.updateExercise(exercise.id, { name: 'Bow circles', areaId: scales.id });
+    await repo.archiveArea(bowing.id);
+    expect((await repo.listAreas()).some((area) => area.id === bowing.id)).toBe(false);
+    expect((await repo.listAreas(true)).find((area) => area.id === bowing.id)?.archivedAt).toBeDefined();
+    expect((await repo.listLogs()).find((log) => log.id === past.id)?.areaId).toBe(bowing.id);
+  });
 });
