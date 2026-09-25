@@ -22,3 +22,7 @@
 .archived-list small{display:block;color:#687774;margin-top:3px}
 .backup-actions>button{flex:1 1 190px}
 @media(max-width:620px){.archived-panel .section-heading>button{margin-top:14px}.archived-list li{align-items:flex-start;flex-direction:column}.backup-actions>button{width:100%}}
+
+/* Match empty-state spacing and keep native selects level with adjacent controls. */
+.overview-view .card.empty>p,.history-view .card.empty>p{margin:12px 0 0}
+.library .form-row input,.library .form-row select,.library .form-row>button,.today-view .form-row select,.today-view .form-row>button{height:44px;min-height:44px}
