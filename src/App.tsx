@@ -47,7 +47,7 @@ export function App() {
     <main id="main-content" className="content" tabIndex={-1}>
       <div className="intro"><p className="eyebrow">Practice companion</p><h1 ref={heading} tabIndex={-1} aria-live="polite">{page}</h1><p>{descriptions[page]}</p></div>
       {error ? <p role="alert" className="notice error">{error}</p> : !ready ? <p role="status">Opening your practice library…</p> :
-        page === 'Library' ? <Library /> : page === 'Today' ? <Today /> : page === 'Overview' ? <Overview /> : <History />}
+        page === 'Library' ? <Library /> : page === 'Today' ? <Today onOpenLibrary={() => navigate('Library')} /> : page === 'Overview' ? <Overview /> : <History />}
     </main>
     <nav className="bottom-nav" aria-label="Main navigation">{pages.map((item) => <button key={item} type="button" className={page === item ? 'active' : ''} aria-current={page === item ? 'page' : undefined} onClick={() => navigate(item)}>{item}</button>)}</nav>
     {ready && <BackupReminder />}

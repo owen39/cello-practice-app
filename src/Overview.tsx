@@ -27,6 +27,11 @@ export function Overview() {
     return () => { active = false; window.removeEventListener('focus', load); document.removeEventListener('visibilitychange', load); };
   }, [refresh]);
 
+  if (exercises.length === 0 && logs.length === 0) return <div className="overview-view">
+    {error && <p role="alert" className="notice error">{error}</p>}
+    <section className="card empty"><h2>No practice to show yet</h2><p>Add an exercise in the Library, then mark it practiced to see your overview.</p></section>
+  </div>;
+
   return <div className="overview-view">
     {error && <p role="alert" className="notice error">{error}</p>}
     <section className="card" aria-labelledby="area-overview-heading">

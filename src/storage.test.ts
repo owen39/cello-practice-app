@@ -92,6 +92,23 @@ describe('local repository', () => {
     expect(areaSummary(await repo.listLogs(), area.id, '2026-09-24').lastPracticed).toBeUndefined();
   });
 
+  it('restores archived areas before their exercises while retaining practice history', async () => {
+    const repo = fresh();
+    await repo.initialize();
+    const area = (await repo.listAreas())[0];
+    const exercise = await repo.createExercise('C major scale', area.id);
+    const log = await repo.logPractice('2026-09-24', exercise.id);
+    await repo.archiveExercise(exercise.id);
+    await repo.archiveArea(area.id);
+    await expect(repo.restoreExercise(exercise.id)).rejects.toThrow('Restore its practice area');
+    await repo.restoreArea(area.id);
+    await repo.restoreExercise(exercise.id);
+    expect((await repo.listAreas()).some((item) => item.id === area.id)).toBe(true);
+    expect((await repo.listExercises()).some((item) => item.id === exercise.id)).toBe(true);
+    expect(await repo.listLogs()).toEqual([log]);
+    await expect(repo.restoreExercise(exercise.id)).rejects.toThrow('Archived exercise not found');
+  });
+
   it('round-trips a local backup including archived records, selections, and logs', async () => {
     const source = fresh();
     await source.initialize();

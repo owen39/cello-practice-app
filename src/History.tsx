@@ -31,6 +31,8 @@ export function History() {
   const areaById = new Map(areas.map((area) => [area.id, area]));
 
   async function correct(log: PracticeLog) {
+    const exerciseName = exerciseById.get(log.exerciseId)?.name ?? 'this exercise';
+    if (!window.confirm(`Delete ${exerciseName} practice entry for ${formatDay(log.day)}? This cannot be undone.`)) return;
     setError(undefined); setBusyId(log.id);
     try { await repository.deleteLog(log.id); await refresh(); }
     catch (cause) { setError(message(cause)); }

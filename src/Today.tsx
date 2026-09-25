@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Area, Day, Exercise, PracticeLog, TodaySelection } from './domain';
 import { repository } from './storage';
+import { formatDay } from './display';
 import { useLocalDay } from './useLocalDay';
 
 interface Snapshot { areas: Area[]; exercises: Exercise[]; selections: TodaySelection[]; logs: PracticeLog[] }
 const empty: Snapshot = { areas: [], exercises: [], selections: [], logs: [] };
 
-export function Today() {
+export function Today({ onOpenLibrary }: { onOpenLibrary: () => void }) {
   const day = useLocalDay();
   const [snapshot, setSnapshot] = useState<Snapshot>(empty);
   const [chosenId, setChosenId] = useState('');
@@ -55,7 +56,7 @@ export function Today() {
   return <div className="today-view">
     {error && <p role="alert" className="notice error">{error}</p>}
     <section className="card" aria-labelledby="today-list-heading">
-      <div className="section-heading"><div><h2 id="today-list-heading">Today’s list</h2><p>{day} · Choose only what feels useful today.</p></div><span className="count-badge">{selected.length} selected</span></div>
+      <div className="section-heading"><div><h2 id="today-list-heading">Today’s list</h2><p>{formatDay(day)} · Choose only what feels useful today.</p></div><span className="count-badge">{selected.length} selected</span></div>
       {selected.length === 0 ? <div className="today-empty"><h3>Your list is open</h3><p>Add an exercise below. You can also practice directly from the Library without adding it here.</p></div> :
         <ul className="today-list">{selected.map(({ exerciseId }) => {
           const exercise = exerciseById.get(exerciseId);
@@ -69,7 +70,7 @@ export function Today() {
         <label>Add to today’s list<select value={chosenId} onChange={(event) => setChosenId(event.target.value)} disabled={busy || available.length === 0}><option value="">Choose an exercise</option>{available.map((exercise) => <option key={exercise.id} value={exercise.id}>{exercise.name} · {displayArea(exercise.id)}</option>)}</select></label>
         <button className="secondary" disabled={busy || !chosenId}>Add to today</button>
       </form>
-      {available.length === 0 && snapshot.exercises.filter((exercise) => !exercise.archivedAt).length === 0 && <p className="helper">Add an exercise in the Library to get started.</p>}
+      {available.length === 0 && snapshot.exercises.filter((exercise) => !exercise.archivedAt).length === 0 && <div className="today-start"><p className="helper">Add an exercise in the Library to get started.</p><button className="secondary" type="button" onClick={onOpenLibrary}>Go to Library</button></div>}
     </section>
     {extraLogs.length > 0 && <section className="card" aria-labelledby="extra-heading"><h2 id="extra-heading">Also practiced today</h2><p>These were marked in the Library without adding them to today’s list.</p><ul className="today-list">{extraLogs.map((log) => <li className="today-item" key={log.id}><div><strong>{displayName(log.exerciseId)}</strong><small>{areaById.get(log.areaId)?.name ?? 'Archived area'}</small></div><button className="small text-button" aria-label={`Undo today's practice for ${displayName(log.exerciseId)}`} disabled={busy} onClick={() => void perform(() => repository.deleteLog(log.id))}>Undo practice</button></li>)}</ul></section>}
   </div>;

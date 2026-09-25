@@ -9,3 +9,16 @@
 .skip-link{position:absolute;left:12px;top:-80px;z-index:20;padding:10px 14px;border-radius:8px;background:#fff;color:#243d42;font-weight:800}.skip-link:focus-visible{top:12px;outline:3px solid #a66c3d}.intro h1:focus-visible{outline:3px solid #a66c3d;outline-offset:4px}.success{background:#e2ece7;color:#244e3a}.backup-actions{display:flex;align-items:end;gap:16px;flex-wrap:wrap;margin-top:18px}.backup-actions label{flex:1 1 230px}.backup-actions input{cursor:pointer}.backup-panel .helper{font-size:.82rem;margin-top:12px}@media(max-width:620px){.backup-actions>button{width:100%}}
 
 .backup-reminder{width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #e9e4da;border-radius:20px;padding:28px;background:#fff;color:#243d42;box-shadow:0 20px 60px #142c3680}.backup-reminder::backdrop{background:#142c36a8}.backup-reminder h2{margin:0 0 12px;font-size:1.6rem;letter-spacing:-.03em}.backup-reminder p{color:#5f6f6d;line-height:1.5}.backup-reminder-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.backup-reminder button{min-height:44px;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}.backup-reminder button:focus-visible{outline:3px solid #a66c3d;outline-offset:2px}.backup-reminder button:disabled{opacity:.55;cursor:not-allowed}@media(max-width:520px){.backup-reminder{padding:24px}.backup-reminder-actions{display:grid}.backup-reminder-actions button{width:100%}}
+
+.app{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+.today-start{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:8px}
+.today-start .helper{margin:0}
+.archived-panel h3{font-size:1rem;margin:20px 0 0}
+.archived-panel button,.backup-actions button{min-height:44px;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+.archived-panel button:disabled,.backup-actions button:disabled{opacity:.55;cursor:not-allowed}
+.archived-panel button:focus-visible,.backup-actions button:focus-visible{outline:3px solid #a66c3d;outline-offset:2px}
+.archived-list{list-style:none;padding:0;margin:8px 0 0}
+.archived-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #e9e4da}
+.archived-list small{display:block;color:#687774;margin-top:3px}
+.backup-actions>button{flex:1 1 190px}
+@media(max-width:620px){.archived-panel .section-heading>button{margin-top:14px}.archived-list li{align-items:flex-start;flex-direction:column}.backup-actions>button{width:100%}}

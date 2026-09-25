@@ -10,6 +10,8 @@ This file tracks the current slice and completed work. Each completed slice shou
 | 3. Overview and history | Complete | Senior developer agent | Active area and exercise recency/counts; dated history with archived names and log correction. `npm run build` and `npm test` pass (13 tests). |
 | 4. Finish local release | Complete | Senior developer agent + tech lead | Local backup/restore, setup docs, accessibility and phone layout polish. Build and 15 tests pass; live phone-width core flow and offline reopen passed. |
 | 4a. Weekly backup reminder | Complete | Tech lead | Reminder after seven days of saved exercise data or the last backup/deferral; Download backup and Remind me next week actions. Build and 18 tests pass. |
+| 4b. UX audit and recovery | Complete | Senior UX designer + senior developer agent | `UX_AUDIT.md` records flow findings; Library now exposes archived area/exercise restore, with area-first guard and History deletion confirmation. Repository restoration test passes. |
+| 4c. UX consistency and polish | Complete in code; phone check pending | Senior developer agent | Human dates, matching recency/window labels, Today route to Library, safe-area clearance, backup copy, styled restore control, and cleaner first-use states. `npm test` passes 19 tests; `npm run build` passes. Installed iPhone backup save and final viewport check remain manual. |
 | 5. Optional cloud sync | Deferred | Unassigned | Needs Supabase configuration and conflict policy. |
 
 ## Decisions
@@ -23,6 +25,7 @@ This file tracks the current slice and completed work. Each completed slice shou
 - 2026-09-25: Overview computes area counts from each log's saved area snapshot and counts distinct local days. History includes archived catalog names and deleting a log immediately reloads its date group; navigating to Overview recalculates totals from storage.
 - 2026-09-25: Backup files include the complete local catalog, selections, and logs. Restore validates schema/version, uniqueness, dates, and references before an atomic replacement. Invalid backups leave existing data untouched.
 - 2026-09-25: Backup reminders appear on app open/return once a week after exercise data exists. Reminder timing is a device-local preference and is not part of the practice backup.
+- 2026-09-25: Archived areas and exercises can be restored from Library. An exercise in an archived area requires that area restored first. Archive prompts confirm the action; History deletion confirms the named exercise and date. Today's immediate Undo remains one tap.
 
 ## Local release verification
 

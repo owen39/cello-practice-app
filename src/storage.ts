@@ -73,6 +73,12 @@ export class IndexedDbRepository implements PracticeRepository {
     });
   }
 
+  async restoreArea(id: string): Promise<void> {
+    const area = await this.db.areas.get(id);
+    if (!area?.archivedAt) throw new Error('Archived area not found.');
+    await this.db.areas.update(id, { archivedAt: undefined, updatedAt: new Date().toISOString() });
+  }
+
   async listExercises(includeArchived = false): Promise<Exercise[]> {
     const exercises = await this.db.exercises.toArray();
     return exercises.filter((exercise) => includeArchived || !exercise.archivedAt)
@@ -96,6 +102,16 @@ export class IndexedDbRepository implements PracticeRepository {
 
   async archiveExercise(id: string): Promise<void> {
     if (!await this.db.exercises.update(id, { archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })) throw new Error('Exercise not found.');
+  }
+
+  async restoreExercise(id: string): Promise<void> {
+    await this.db.transaction('rw', this.db.areas, this.db.exercises, async () => {
+      const exercise = await this.db.exercises.get(id);
+      if (!exercise?.archivedAt) throw new Error('Archived exercise not found.');
+      const area = await this.db.areas.get(exercise.areaId);
+      if (!area || area.archivedAt) throw new Error('Restore its practice area before restoring this exercise.');
+      await this.db.exercises.update(id, { archivedAt: undefined, updatedAt: new Date().toISOString() });
+    });
   }
 
   listSelections(day: Day): Promise<TodaySelection[]> {

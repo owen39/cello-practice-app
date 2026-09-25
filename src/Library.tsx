@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { parseBackup } from './backup';
 import { downloadPracticeBackup } from './backupDownload';
 import { markReminderHandled } from './backupReminderSchedule';
 import { exerciseSummary, type Area, type Exercise, type PracticeLog } from './domain';
+import { lastPracticedLabel } from './display';
 import { repository } from './storage';
 import { useLocalDay } from './useLocalDay';
 
-interface Catalog { areas: Area[]; exercises: Exercise[]; logs: PracticeLog[] }
-const emptyCatalog: Catalog = { areas: [], exercises: [], logs: [] };
+interface Catalog { areas: Area[]; exercises: Exercise[]; archivedAreas: Area[]; archivedExercises: Exercise[]; logs: PracticeLog[] }
+const emptyCatalog: Catalog = { areas: [], exercises: [], archivedAreas: [], archivedExercises: [], logs: [] };
 
 export function Library() {
   const [catalog, setCatalog] = useState<Catalog>(emptyCatalog);
@@ -22,13 +23,17 @@ export function Library() {
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const restoreInput = useRef<HTMLInputElement>(null);
   const today = useLocalDay();
 
   const refresh = useCallback(async () => {
-    const [areas, exercises, logs] = await Promise.all([
-      repository.listAreas(), repository.listExercises(), repository.listLogs()
+    const [allAreas, allExercises, logs] = await Promise.all([
+      repository.listAreas(true), repository.listExercises(true), repository.listLogs()
     ]);
-    setCatalog({ areas, exercises, logs });
+    const areas = allAreas.filter((area) => !area.archivedAt);
+    const exercises = allExercises.filter((exercise) => !exercise.archivedAt);
+    setCatalog({ areas, exercises, archivedAreas: allAreas.filter((area) => !!area.archivedAt), archivedExercises: allExercises.filter((exercise) => !!exercise.archivedAt), logs });
     setExerciseAreaId((current) => areas.some((area) => area.id === current) ? current : (areas[0]?.id ?? ''));
   }, []);
 
@@ -66,7 +71,7 @@ export function Library() {
   function beginExerciseEdit(exercise: Exercise) { setEditingArea(null); setEditingExercise(exercise.id); setEditName(exercise.name); setEditAreaId(exercise.areaId); }
 
   async function downloadBackup() {
-    await perform(downloadPracticeBackup, () => setNotice('Backup downloaded. Keep the file somewhere safe.'));
+    await perform(downloadPracticeBackup, () => setNotice('Backup ready. Save the file somewhere safe.'));
   }
 
   async function restoreBackup(event: ChangeEvent<HTMLInputElement>) {
@@ -103,13 +108,13 @@ export function Library() {
           {editingArea === area.id ? <form className="inline-form" onSubmit={(event) => { event.preventDefault(); void perform(() => repository.renameArea(area.id, editName), () => setEditingArea(null)); }}>
             <label><span className="sr-only">Rename {area.name}</span><input autoFocus value={editName} onChange={(event) => setEditName(event.target.value)} maxLength={80} required /></label>
             <button className="small primary" disabled={busy}>Save</button><button className="small text-button" type="button" onClick={() => setEditingArea(null)}>Cancel</button>
-          </form> : <><span><strong>{area.name}</strong><small>{activeCount} active {activeCount === 1 ? 'exercise' : 'exercises'}</small></span><div className="actions"><button className="small text-button" aria-label={`Rename ${area.name} area`} onClick={() => beginAreaEdit(area)} disabled={busy}>Rename</button><button className="small text-button" aria-label={`Archive ${area.name} area`} disabled={busy || activeCount > 0} title={activeCount > 0 ? 'Move or archive its active exercises first' : undefined} onClick={() => void perform(() => repository.archiveArea(area.id))}>Archive</button></div></>}
+          </form> : <><span><strong>{area.name}</strong><small>{activeCount} active {activeCount === 1 ? 'exercise' : 'exercises'}</small></span><div className="actions"><button className="small text-button" aria-label={`Rename ${area.name} area`} onClick={() => beginAreaEdit(area)} disabled={busy}>Rename</button><button className="small text-button" aria-label={`Archive ${area.name} area`} disabled={busy || activeCount > 0} title={activeCount > 0 ? 'Move or archive its active exercises first' : undefined} onClick={() => { if (window.confirm(`Archive ${area.name}? You can restore it in Archived items.`)) void perform(() => repository.archiveArea(area.id)); }}>Archive</button></div></>}
           {activeCount > 0 && <p className="helper">Move or archive its exercises before archiving this area.</p>}
         </li>;
       })}</ul>
     </section>
     <section className="library-browse" aria-labelledby="browse-heading">
-      <div className="section-heading"><div><h2 id="browse-heading">Your exercises</h2><p>{catalog.exercises.length} active {catalog.exercises.length === 1 ? 'exercise' : 'exercises'}</p></div><label className="search-label">Search exercises<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find an exercise" /></label></div>
+      <div className="section-heading"><div><h2 id="browse-heading">Your exercises</h2><p>{catalog.exercises.length} active {catalog.exercises.length === 1 ? 'exercise' : 'exercises'}</p></div>{catalog.exercises.length > 0 && <label className="search-label">Search exercises<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find an exercise" /></label>}</div>
       {catalog.exercises.length === 0 ? <div className="card empty"><h3>Start your library</h3><p>Add an exercise above. You can decide when to practice it later.</p></div> : filtered.length === 0 ? <div className="card empty"><h3>No matches</h3><p>Try a different search term.</p></div> : catalog.areas.map((area) => {
         const exercises = filtered.filter((exercise) => exercise.areaId === area.id);
         if (exercises.length === 0) return null;
@@ -121,15 +126,19 @@ export function Library() {
               <label>Exercise name<input autoFocus value={editName} onChange={(event) => setEditName(event.target.value)} maxLength={120} required /></label>
               <label>Practice area<select value={editAreaId} onChange={(event) => setEditAreaId(event.target.value)}>{catalog.areas.map((option) => <option value={option.id} key={option.id}>{option.name}</option>)}</select></label>
               <div className="actions"><button className="small primary" disabled={busy}>Save changes</button><button className="small text-button" type="button" onClick={() => setEditingExercise(null)}>Cancel</button></div>
-            </form> : <><div className="exercise-main"><div><h4>{exercise.name}</h4><p className="exercise-meta">{summary.lastPracticed ? `Last practiced ${summary.lastPracticed}` : 'Not practiced yet'} · {summary.days7} days in the past 7 · {summary.days30} days in the past 30</p></div><div className="actions"><button className="small text-button" aria-label={`Edit ${exercise.name}`} onClick={() => beginExerciseEdit(exercise)} disabled={busy}>Edit</button><button className="small text-button" aria-label={`Archive ${exercise.name}`} onClick={() => void perform(() => repository.archiveExercise(exercise.id))} disabled={busy}>Archive</button></div></div><div className="practice-action">{todayLog ? <button className="secondary" aria-label={`Undo today's practice for ${exercise.name}`} onClick={() => void perform(() => repository.deleteLog(todayLog.id))} disabled={busy}>Practiced today · Undo</button> : <button className="primary" aria-label={`Mark ${exercise.name} practiced today`} onClick={() => void perform(() => repository.logPractice(today, exercise.id))} disabled={busy}>Mark practiced today</button>}</div></>}
+            </form> : <><div className="exercise-main"><div><h4>{exercise.name}</h4><p className="exercise-meta">{lastPracticedLabel(summary.lastPracticed, today)} · {summary.days7} days in past 7 · {summary.days30} days in past 30</p></div><div className="actions"><button className="small text-button" aria-label={`Edit ${exercise.name}`} onClick={() => beginExerciseEdit(exercise)} disabled={busy}>Edit</button><button className="small text-button" aria-label={`Archive ${exercise.name}`} onClick={() => { if (window.confirm(`Archive ${exercise.name}? You can restore it in Archived items.`)) void perform(() => repository.archiveExercise(exercise.id)); }} disabled={busy}>Archive</button></div></div><div className="practice-action">{todayLog ? <button className="secondary" aria-label={`Undo today's practice for ${exercise.name}`} onClick={() => void perform(() => repository.deleteLog(todayLog.id))} disabled={busy}>Practiced today · Undo</button> : <button className="primary" aria-label={`Mark ${exercise.name} practiced today`} onClick={() => void perform(() => repository.logPractice(today, exercise.id))} disabled={busy}>Mark practiced today</button>}</div></>}
           </li>;
         })}</ul></section>;
       })}
     </section>
+    <section className="card archived-panel" aria-labelledby="archived-heading">
+      <div className="section-heading"><div><h2 id="archived-heading">Archived items</h2><p>Restore an area before restoring exercises in it.</p></div><button className="small secondary" type="button" aria-expanded={showArchived} onClick={() => setShowArchived((open) => !open)}>{showArchived ? 'Hide archived items' : `Show archived items (${catalog.archivedAreas.length + catalog.archivedExercises.length})`}</button></div>
+      {showArchived && (catalog.archivedAreas.length + catalog.archivedExercises.length === 0 ? <p className="helper">Nothing archived yet.</p> : <><h3>Areas</h3><ul className="archived-list">{catalog.archivedAreas.map((area) => <li key={area.id}><span>{area.name}</span><button className="small secondary" disabled={busy} onClick={() => void perform(() => repository.restoreArea(area.id), () => setNotice(`${area.name} restored.`))}>Restore area</button></li>)}</ul><h3>Exercises</h3><ul className="archived-list">{catalog.archivedExercises.map((exercise) => { const area = [...catalog.areas, ...catalog.archivedAreas].find((item) => item.id === exercise.areaId); return <li key={exercise.id}><span>{exercise.name}<small>{area?.name ?? 'Unknown area'}{area?.archivedAt ? ' · Restore area first' : ''}</small></span><button className="small secondary" disabled={busy || !!area?.archivedAt} onClick={() => void perform(() => repository.restoreExercise(exercise.id), () => setNotice(`${exercise.name} restored.`))}>Restore exercise</button></li>; })}</ul></>)}
+    </section>
     <section className="card backup-panel" aria-labelledby="backup-heading">
       <h2 id="backup-heading">Keep a copy of your practice</h2>
       <p>Your records are saved on this device. Download a backup occasionally, especially before changing or clearing your browser.</p>
-      <div className="backup-actions"><button className="secondary" type="button" disabled={busy} onClick={() => void downloadBackup()}>Download backup</button><label>Restore a backup<input type="file" accept=".json,application/json" disabled={busy} onChange={(event) => void restoreBackup(event)} /></label></div>
+      <div className="backup-actions"><button className="secondary" type="button" disabled={busy} onClick={() => void downloadBackup()}>Download backup</button><button className="secondary" type="button" disabled={busy} onClick={() => restoreInput.current?.click()}>Restore a backup</button><input ref={restoreInput} className="sr-only" type="file" aria-label="Choose backup file to restore" accept=".json,application/json" disabled={busy} onChange={(event) => void restoreBackup(event)} /></div>
       <p className="helper">Restoring replaces all practice data on this device. Your backup file stays on your device.</p>
     </section>
   </div>;

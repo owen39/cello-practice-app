@@ -56,7 +56,7 @@ export function BackupReminder() {
 
   return <dialog ref={dialog} className="backup-reminder" aria-labelledby="backup-reminder-title" aria-describedby="backup-reminder-description" onCancel={(event) => { event.preventDefault(); remindNextWeek(); }}>
     <h2 id="backup-reminder-title">Time to back up your practice</h2>
-    <p id="backup-reminder-description">Save a copy of your exercises and practice history. Your records are stored on this device.</p>
+    <p id="backup-reminder-description">Save a copy of your exercises and practice history. Your records are stored on this device. After downloading, save the file somewhere safe.</p>
     {error && <p role="alert" className="notice error">{error}</p>}
     <div className="backup-reminder-actions">
       <button type="button" className="primary" autoFocus disabled={busy} onClick={() => void download()}>Download backup</button>
