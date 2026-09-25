@@ -34,6 +34,8 @@ Unfinished Today selections do not carry over. Archiving an exercise removes it 
 
 At the bottom of Library, **Download backup** saves all areas, exercises, Today selections, and practice logs as a JSON file. Keep that file somewhere safe. **Restore a backup** validates the file, asks for confirmation, then replaces all local practice data in one transaction. An invalid file leaves existing data intact. A backup is useful before clearing browser data or moving to a different device; there is no automatic cloud backup.
 
+Once you have an exercise, the app reminds you to back up after a week. The reminder appears when you open or return to the app. Downloading a backup or choosing **Remind me next week** postpones it for seven days. Reminder timing is a device-local preference, not practice data, so it is not included in the backup file.
+
 ## Project layout
 
 - `src/domain.ts`: local day and distinct-day calculations.

@@ -3,6 +3,7 @@ import { Library } from './Library';
 import { Today } from './Today';
 import { Overview } from './Overview';
 import { History } from './History';
+import { BackupReminder } from './BackupReminder';
 import { repository } from './storage';
 
 type Page = 'Today' | 'Library' | 'Overview' | 'History';
@@ -49,5 +50,6 @@ export function App() {
         page === 'Library' ? <Library /> : page === 'Today' ? <Today /> : page === 'Overview' ? <Overview /> : <History />}
     </main>
     <nav className="bottom-nav" aria-label="Main navigation">{pages.map((item) => <button key={item} type="button" className={page === item ? 'active' : ''} aria-current={page === item ? 'page' : undefined} onClick={() => navigate(item)}>{item}</button>)}</nav>
+    {ready && <BackupReminder />}
   </div>;
 }

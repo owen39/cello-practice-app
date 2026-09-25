@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import { parseBackup } from './backup';
+import { downloadPracticeBackup } from './backupDownload';
+import { markReminderHandled } from './backupReminderSchedule';
 import { exerciseSummary, type Area, type Exercise, type PracticeLog } from './domain';
 import { repository } from './storage';
 import { useLocalDay } from './useLocalDay';
@@ -64,17 +66,7 @@ export function Library() {
   function beginExerciseEdit(exercise: Exercise) { setEditingArea(null); setEditingExercise(exercise.id); setEditName(exercise.name); setEditAreaId(exercise.areaId); }
 
   async function downloadBackup() {
-    await perform(async () => {
-      const backup = await repository.exportBackup();
-      const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `cello-practice-${today}.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-    }, () => setNotice('Backup downloaded. Keep the file somewhere safe.'));
+    await perform(downloadPracticeBackup, () => setNotice('Backup downloaded. Keep the file somewhere safe.'));
   }
 
   async function restoreBackup(event: ChangeEvent<HTMLInputElement>) {
@@ -84,7 +76,7 @@ export function Library() {
     try {
       const backup = parseBackup(JSON.parse(await file.text()) as unknown);
       if (!window.confirm('Restore this backup? It will replace all practice data currently saved on this device.')) return;
-      await perform(() => repository.importBackup(backup), () => setNotice('Backup restored. Your practice data is ready.'));
+      await perform(() => repository.importBackup(backup), () => { markReminderHandled(); setNotice('Backup restored. Your practice data is ready.'); });
     } catch (cause) { setError(message(cause)); }
   }
 

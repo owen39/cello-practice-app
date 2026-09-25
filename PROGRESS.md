@@ -9,6 +9,7 @@ This file tracks the current slice and completed work. Each completed slice shou
 | 2. Today and logging | Complete | Senior developer agent | Daily selection, one-tap log/undo, removal independent of history, direct Library logs visible in Today. Local midnight/focus refresh. Build and 9 tests pass. |
 | 3. Overview and history | Complete | Senior developer agent | Active area and exercise recency/counts; dated history with archived names and log correction. `npm run build` and `npm test` pass (13 tests). |
 | 4. Finish local release | Complete | Senior developer agent + tech lead | Local backup/restore, setup docs, accessibility and phone layout polish. Build and 15 tests pass; live phone-width core flow and offline reopen passed. |
+| 4a. Weekly backup reminder | Complete | Tech lead | Reminder after seven days of saved exercise data or the last backup/deferral; Download backup and Remind me next week actions. Build and 18 tests pass. |
 | 5. Optional cloud sync | Deferred | Unassigned | Needs Supabase configuration and conflict policy. |
 
 ## Decisions
@@ -21,6 +22,7 @@ This file tracks the current slice and completed work. Each completed slice shou
 - 2026-09-25: Today's selected list is keyed by local calendar day; old unfinished selections stay stored but are not shown on later days. The mounted app refreshes at local midnight and on focus/visibility, including the Library's logging date.
 - 2026-09-25: Overview computes area counts from each log's saved area snapshot and counts distinct local days. History includes archived catalog names and deleting a log immediately reloads its date group; navigating to Overview recalculates totals from storage.
 - 2026-09-25: Backup files include the complete local catalog, selections, and logs. Restore validates schema/version, uniqueness, dates, and references before an atomic replacement. Invalid backups leave existing data untouched.
+- 2026-09-25: Backup reminders appear on app open/return once a week after exercise data exists. Reminder timing is a device-local preference and is not part of the practice backup.
 
 ## Local release verification
 
