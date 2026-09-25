@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import type { Area, Day, Exercise, PracticeLog, TodaySelection } from './domain';
 import type { PracticeRepository } from './repository';
 import { parseBackup, type PracticeBackup } from './backup';
+import { createId } from './id';
 
 const starterAreas = ['Scales', 'Left hand', 'Bowing', 'Pieces', 'Other'];
 
@@ -40,7 +41,7 @@ export class IndexedDbRepository implements PracticeRepository {
       if (await this.db.areas.count()) return;
       const now = new Date().toISOString();
       await this.db.areas.bulkAdd(starterAreas.map((name, sortOrder) => ({
-        id: crypto.randomUUID(), name, sortOrder, createdAt: now, updatedAt: now
+        id: createId(), name, sortOrder, createdAt: now, updatedAt: now
       })));
     });
   }
@@ -53,7 +54,7 @@ export class IndexedDbRepository implements PracticeRepository {
 
   async createArea(name: string): Promise<Area> {
     const now = new Date().toISOString();
-    const area = { id: crypto.randomUUID(), name: requiredName(name), sortOrder: (await this.db.areas.count()), createdAt: now, updatedAt: now };
+    const area = { id: createId(), name: requiredName(name), sortOrder: (await this.db.areas.count()), createdAt: now, updatedAt: now };
     await this.db.areas.add(area);
     return area;
   }
@@ -89,7 +90,7 @@ export class IndexedDbRepository implements PracticeRepository {
     const area = await this.db.areas.get(areaId);
     if (!area || area.archivedAt) throw new Error('Choose an active area.');
     const now = new Date().toISOString();
-    const exercise = { id: crypto.randomUUID(), name: requiredName(name), areaId, createdAt: now, updatedAt: now };
+    const exercise = { id: createId(), name: requiredName(name), areaId, createdAt: now, updatedAt: now };
     await this.db.exercises.add(exercise);
     return exercise;
   }
@@ -140,7 +141,7 @@ export class IndexedDbRepository implements PracticeRepository {
       if (previous) return previous;
       const exercise = await this.db.exercises.get(exerciseId);
       if (!exercise || exercise.archivedAt) throw new Error('Active exercise not found.');
-      const log = { id: crypto.randomUUID(), day, exerciseId, areaId: exercise.areaId, createdAt: new Date().toISOString() };
+      const log = { id: createId(), day, exerciseId, areaId: exercise.areaId, createdAt: new Date().toISOString() };
       await this.db.logs.add(log);
       return log;
     });
